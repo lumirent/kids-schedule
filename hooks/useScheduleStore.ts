@@ -144,6 +144,7 @@ export const useScheduleStore = create<ScheduleState>()(
     }),
     {
       name: 'kids-schedule-storage',
+      version: 1,
       storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : ({} as Storage))),
       partialize: (state) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

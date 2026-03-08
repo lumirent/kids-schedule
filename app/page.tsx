@@ -21,6 +21,30 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then((registration) => {
         console.log('SW registered:', registration);
+        
+        // 새로운 서비스 워커가 발견되었을 때 업데이트 확인
+        registration.onupdatefound = () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // 새로운 내용이 있으므로 알림을 띄우거나 자동 새로고침 고려
+                  console.log('New content is available; please refresh.');
+                }
+              }
+            };
+          }
+        };
+      });
+
+      // 서비스 워커가 제어권을 잡으면 (skipWaiting 후) 페이지 새로고침
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          window.location.reload();
+          refreshing = true;
+        }
       });
     }
     if ('Notification' in window && Notification.permission === 'default') {
