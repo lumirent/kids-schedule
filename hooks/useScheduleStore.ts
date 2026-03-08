@@ -6,6 +6,7 @@ export interface Child {
   id: string;
   name: string;
   color: string;
+  schoolDismissalTimes?: Record<string, string>;
 }
 
 export interface AcademyTeacher {

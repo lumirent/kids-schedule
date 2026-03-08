@@ -140,6 +140,11 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
                 </div>
                 <div>
                   <p className="font-bold text-sm text-gray-800 dark:text-gray-100">{child.name}</p>
+                  {child.schoolDismissalTimes && Object.keys(child.schoolDismissalTimes).length > 0 && (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                      {t('child.schoolDismissalTimeLabel')}: {Object.keys(child.schoolDismissalTimes).length}{t('academy.count')} 설정됨
+                    </p>
+                  )}
                 </div>
               </div>
               {!isViewerMode && (

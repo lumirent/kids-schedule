@@ -4,6 +4,17 @@ import { useScheduleStore } from '@/hooks/useScheduleStore';
 import { COLOR_MAP, SELECTED_COLOR_MAP } from '@/lib/constants';
 import { timeToMinutes, cn, getScheduleColor } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
+import { type Schedule } from '@/hooks/useScheduleStore';
+
+type TimelineItem = (Schedule & { type: 'academy' }) | {
+  id: string;
+  childId: string;
+  academyId: string;
+  day: string;
+  start: string;
+  end: string;
+  type: 'dismissal';
+};
 
 interface HomeViewProps {
   setView?: (view: string) => void;
@@ -40,13 +51,35 @@ export default function HomeView({ setView, onAddChild }: HomeViewProps) {
     return ['일', '월', '화', '수', '목', '금', '토'][dayIndex];
   }, [mounted]);
 
-  const todaysSchedule = filteredSchedules
-    .filter(s => s.day === currentDay)
-    .sort((a, b) => {
-      const timeA = timeToMinutes(a.shuttleIn || a.start) || 0;
-      const timeB = timeToMinutes(b.shuttleIn || b.start) || 0;
+  const todaysSchedule = React.useMemo(() => {
+    const schedulesWithDismissal: TimelineItem[] = filteredSchedules.filter(s => s.day === currentDay).map(s => ({ ...s, type: 'academy' }));
+    
+    // Add school dismissal as virtual events
+    const activeChildren = selectedChildId === 'all' 
+      ? children 
+      : children.filter(c => c.id === selectedChildId);
+      
+    activeChildren.forEach(child => {
+      const dismissalTime = child.schoolDismissalTimes?.[currentDay];
+      if (dismissalTime) {
+        schedulesWithDismissal.push({
+          id: `dismissal-${child.id}`,
+          childId: child.id,
+          academyId: '',
+          day: currentDay,
+          start: dismissalTime,
+          end: dismissalTime,
+          type: 'dismissal'
+        });
+      }
+    });
+
+    return schedulesWithDismissal.sort((a, b) => {
+      const timeA = timeToMinutes(a.type === 'dismissal' ? a.start : (a.shuttleIn || a.start)) || 0;
+      const timeB = timeToMinutes(b.type === 'dismissal' ? b.start : (b.shuttleIn || b.start)) || 0;
       return timeA - timeB;
     });
+  }, [filteredSchedules, currentDay, children, selectedChildId]);
 
   if (children.length === 0 && !isViewerMode) {
     return (
@@ -206,13 +239,23 @@ export default function HomeView({ setView, onAddChild }: HomeViewProps) {
             if (!child) return null;
 
             const isFiltered = selectedChildId !== 'all';
-            const colorClass = getScheduleColor(child.color, academy?.color || 'indigo', isFiltered);
-            const displayTime = s.shuttleIn || s.start;
+            const isDismissal = s.type === 'dismissal';
+            
+            const colorClass = isDismissal 
+              ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+              : getScheduleColor(child.color, academy?.color || 'indigo', isFiltered);
+            
+            const displayTime = s.type === 'dismissal' ? s.start : (s.shuttleIn || s.start);
 
             return (
               <div key={s.id} className="flex gap-6 group animate-slide-up" style={{ animationDelay: `${(idx + 1) * 0.1}s` }}>
                 <div className="flex flex-col items-center w-12 shrink-0">
-                  <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1.5 rounded-xl transition-colors">{displayTime}</div>
+                  <div className={cn(
+                    "text-[10px] font-black px-2 py-1.5 rounded-xl transition-colors",
+                    isDismissal 
+                      ? "text-slate-500 bg-slate-100 dark:bg-slate-800"
+                      : "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
+                  )}>{displayTime}</div>
                   <div className="w-[2px] flex-1 bg-gradient-to-b from-indigo-100 to-transparent dark:from-indigo-900/30 dark:to-transparent my-2 group-last:hidden" />
                 </div>
                 
@@ -235,14 +278,18 @@ export default function HomeView({ setView, onAddChild }: HomeViewProps) {
                     )}>
                       {child.name}
                     </span>
-                    <h4 className="font-black text-lg tracking-tight leading-tight">{academy?.name}</h4>
+                    <h4 className="font-black text-lg tracking-tight leading-tight">
+                      {isDismissal ? t('child.schoolDismissalTimeLabel') : academy?.name}
+                    </h4>
                     
-                    <div className="mt-1 text-[11px] font-bold opacity-80 flex items-center gap-1.5">
-                      <Clock size={12} />
-                      <span>{s.start} - {s.end}</span>
-                    </div>
+                    {!isDismissal && (
+                      <div className="mt-1 text-[11px] font-bold opacity-80 flex items-center gap-1.5">
+                        <Clock size={12} />
+                        <span>{s.start} - {s.end}</span>
+                      </div>
+                    )}
                     
-                    {(s.shuttleIn || s.shuttleOut) && (
+                    {!isDismissal && (s.shuttleIn || s.shuttleOut) && (
                       <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex flex-wrap gap-4">
                         {s.shuttleIn && (
                           <div className="text-[11px] font-bold flex items-center gap-1.5 opacity-70">

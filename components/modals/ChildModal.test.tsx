@@ -46,7 +46,11 @@ describe('components/modals/ChildModal', () => {
     const submitBtn = screen.getByText(t.child.saveButton);
     fireEvent.click(submitBtn);
     
-    expect(mockAddChild).toHaveBeenCalledWith({ name: '철수', color: 'pink' });
+    expect(mockAddChild).toHaveBeenCalledWith({ 
+      name: '철수', 
+      color: 'pink',
+      schoolDismissalTimes: {} 
+    });
     expect(mockOnClose).toHaveBeenCalled();
   });
 

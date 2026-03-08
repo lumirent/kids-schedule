@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Bus, Download } from 'lucide-react';
+import { Bus, Download, Clock } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useScheduleStore, type Schedule } from '@/hooks/useScheduleStore';
 import { DAYS, TIME_SLOTS, SELECTED_COLOR_MAP } from '@/lib/constants';
@@ -118,6 +118,40 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
                     </div>
                     {TIME_SLOTS.map(t_slot => <div key={t_slot} className="h-20 border-b border-border/50 transition-colors"></div>)}
                     
+                    {/* School Dismissal Times */}
+                    {children
+                      .filter(c => selectedChildId === 'all' || c.id === selectedChildId)
+                      .map(child => {
+                        const dismissalTime = child.schoolDismissalTimes?.[day];
+                        if (!dismissalTime) return null;
+
+                        const dMin = timeToMinutes(dismissalTime) || 0;
+                        
+                        return (
+                          <div
+                            key={`dismissal-${child.id}-${day}`}
+                            style={{
+                              position: 'absolute',
+                              left: '2px',
+                              right: '2px',
+                              top: `${(( dMin - 8 * 60) / 60) * GRID_HEIGHT + HEADER_HEIGHT}px`,
+                              height: '24px',
+                              zIndex: 1
+                            }}
+                            className={cn(
+                              "px-1.5 py-0.5 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 flex items-center gap-1 overflow-hidden transition-all",
+                              selectedChildId !== 'all' && selectedChildId !== child.id ? "opacity-20" : "opacity-100"
+                            )}
+                          >
+                            <Clock size={8} className="text-gray-400 shrink-0" />
+                            <div className="text-[7px] font-black text-gray-400 dark:text-gray-500 truncate uppercase tracking-tighter">
+                              {child.name[0]} {t('child.schoolDismissalTimeLabel')} {dismissalTime}
+                            </div>
+                          </div>
+                        );
+                      })
+                    }
+
                     {scheduleByDay[day]?.map((s, index) => {
                       const academy = academies.find(a => a.id === s.academyId);
                       const child = children.find(c => c.id === s.childId);

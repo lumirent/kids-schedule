@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette } from 'lucide-react';
+import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette } from 'lucide-react';
 import { useScheduleStore, type Schedule, type Academy, type Child } from '@/hooks/useScheduleStore';
 import { DAYS, COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
 import { cn, formatPhone } from '@/lib/utils';

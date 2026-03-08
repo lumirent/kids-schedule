@@ -13,9 +13,9 @@ vi.mock('@/hooks/useScheduleStore', () => ({
 // Mock @hello-pangea/dnd because it's hard to test in vitest/jsdom
 vi.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Droppable: ({ children }: { children: (provided: { draggableProps: any; innerRef: any; placeholder: any }, snapshot: { isDraggingOver: boolean }) => React.ReactNode }) => 
-    children({ draggableProps: {}, innerRef: vi.fn(), placeholder: null }, { isDraggingOver: false }),
-  Draggable: ({ children }: { children: (provided: { draggableProps: any; dragHandleProps: any; innerRef: any }, snapshot: { isDragging: boolean }) => React.ReactNode }) => 
+  Droppable: ({ children }: { children: (provided: { droppableProps: object; innerRef: (el: HTMLElement | null) => void; placeholder: React.ReactNode }, snapshot: { isDraggingOver: boolean }) => React.ReactNode }) => 
+    children({ droppableProps: {}, innerRef: vi.fn(), placeholder: null }, { isDraggingOver: false }),
+  Draggable: ({ children }: { children: (provided: { draggableProps: { style: object }; dragHandleProps: object; innerRef: (el: HTMLElement | null) => void }, snapshot: { isDragging: boolean }) => React.ReactNode }) => 
     children({ draggableProps: { style: {} }, dragHandleProps: {}, innerRef: vi.fn() }, { isDragging: false }),
 }));
 
@@ -40,7 +40,7 @@ describe('ScheduleView', () => {
   ];
 
   const mockChildren = [
-    { id: 'c1', name: 'Child 1', color: 'indigo' },
+    { id: 'c1', name: 'Child 1', color: 'indigo', schoolDismissalTimes: {} },
   ];
 
   it('displays shuttle boarding and alighting times', () => {

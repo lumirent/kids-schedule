@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, User, Palette } from 'lucide-react';
+import { X, User, Palette, Clock, Trash2 } from 'lucide-react';
 import { useScheduleStore, type Child } from '@/hooks/useScheduleStore';
-import { COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
+import { COLOR_OPTIONS, COLOR_HEX, DAYS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -23,8 +23,11 @@ export default function ChildModal({ isOpen, onClose, editingChild }: ChildModal
 
   const [formData, setFormData] = useState({
     name: editingChild?.name || '',
-    color: editingChild?.color || 'pink'
+    color: editingChild?.color || 'pink',
+    schoolDismissalTimes: editingChild?.schoolDismissalTimes || {} as Record<string, string>
   });
+
+  const [activeDismissalDay, setActiveDismissalDay] = useState(DAYS[1]); // 월요일
 
   if (!isOpen) return null;
 
@@ -79,6 +82,74 @@ export default function ChildModal({ isOpen, onClose, editingChild }: ChildModal
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               autoFocus
             />
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+              <Clock size={14} /> {t('child.schoolDismissalTimeLabel')}
+            </label>
+            
+            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-3xl space-y-4 border border-gray-100 dark:border-gray-800">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {DAYS.map(day => {
+                  const hasTime = !!formData.schoolDismissalTimes?.[day];
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setActiveDismissalDay(day)}
+                      className={cn(
+                        "px-3 py-2 rounded-xl text-[10px] font-black transition-all shrink-0 border-2",
+                        activeDismissalDay === day
+                          ? "bg-primary border-primary text-white shadow-md shadow-primary/20"
+                          : hasTime 
+                            ? "bg-white dark:bg-gray-900 border-primary/30 text-primary dark:text-indigo-400"
+                            : "bg-white dark:bg-gray-900 border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
+                      )}
+                    >
+                      {t(`schedule.days.${day}`)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-2 items-center animate-in fade-in slide-in-from-top-1 duration-300">
+                <div className="flex-1">
+                  <Input
+                    type="time"
+                    value={formData.schoolDismissalTimes?.[activeDismissalDay] || ''}
+                    onChange={(e) => {
+                      const newTimes = { ...formData.schoolDismissalTimes };
+                      if (e.target.value) {
+                        newTimes[activeDismissalDay] = e.target.value;
+                      } else {
+                        delete newTimes[activeDismissalDay];
+                      }
+                      setFormData({ ...formData, schoolDismissalTimes: newTimes });
+                    }}
+                    className="bg-white dark:bg-gray-900 border-none shadow-inner"
+                  />
+                </div>
+                {formData.schoolDismissalTimes?.[activeDismissalDay] && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    type="button"
+                    onClick={() => {
+                      const newTimes = { ...formData.schoolDismissalTimes };
+                      delete newTimes[activeDismissalDay];
+                      setFormData({ ...formData, schoolDismissalTimes: newTimes });
+                    }}
+                    className="text-gray-400 hover:text-rose-500"
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                )}
+              </div>
+              <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold px-1 italic">
+                * {t('child.schoolDismissalTimePlaceholder')}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
