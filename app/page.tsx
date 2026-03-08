@@ -21,7 +21,7 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then((registration) => {
         console.log('SW registered:', registration);
-        
+
         // 새로운 서비스 워커가 발견되었을 때 업데이트 확인
         registration.onupdatefound = () => {
           const installingWorker = registration.installing;
@@ -98,7 +98,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground max-w-md mx-auto shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden relative border-x border-border/50">
+    <div className="flex flex-col h-screen bg-background text-foreground mx-auto shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden relative border-x border-border/50">
       {isViewerMode && (
         <div className="bg-primary text-white text-[10px] font-bold py-1.5 px-4 flex justify-between items-center shrink-0 z-[60]">
           <div className="flex items-center gap-1.5 uppercase tracking-widest">

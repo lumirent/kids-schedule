@@ -96,6 +96,54 @@ describe('hooks/useScheduleStore', () => {
       expect(useScheduleStore.getState().schedules.length).toBe(0);
     });
 
+    it('updates a schedule group from a specific date forward', async () => {
+      const { fetchSchedules, addSchedules, updateScheduleGroup } = useScheduleStore.getState();
+
+      await addSchedules([
+        { childId: 'c1', academyId: 'a1', groupId: 'g-repeat', date: '2026-03-01', start: '10:00', end: '11:00', repeatType: 'weekly' },
+        { childId: 'c1', academyId: 'a1', groupId: 'g-repeat', date: '2026-03-08', start: '10:00', end: '11:00', repeatType: 'weekly' },
+        { childId: 'c1', academyId: 'a1', groupId: 'g-repeat', date: '2026-03-15', start: '10:00', end: '11:00', repeatType: 'weekly' },
+      ]);
+
+      // Update from Mar 8 onwards
+      await updateScheduleGroup('g-repeat', '2026-03-08', { start: '11:00', end: '12:00' });
+      await fetchSchedules('2026-03-01', '2026-03-20');
+
+      const schedules = useScheduleStore.getState().schedules.sort((a, b) => a.date.localeCompare(b.date));
+      expect(schedules.length).toBe(3);
+
+      // Mar 1 should remain unchanged
+      expect(schedules[0].date).toBe('2026-03-01');
+      expect(schedules[0].start).toBe('10:00');
+
+      // Mar 8 and Mar 15 should be updated
+      expect(schedules[1].date).toBe('2026-03-08');
+      expect(schedules[1].start).toBe('11:00');
+
+      expect(schedules[2].date).toBe('2026-03-15');
+      expect(schedules[2].start).toBe('11:00');
+    });
+
+    it('removes a schedule group from a specific date forward', async () => {
+      const { fetchSchedules, addSchedules, removeScheduleGroup } = useScheduleStore.getState();
+
+      await addSchedules([
+        { childId: 'c1', academyId: 'a1', groupId: 'g-delete', date: '2026-03-01', start: '10:00', end: '11:00', repeatType: 'weekly' },
+        { childId: 'c1', academyId: 'a1', groupId: 'g-delete', date: '2026-03-08', start: '10:00', end: '11:00', repeatType: 'weekly' },
+        { childId: 'c1', academyId: 'a1', groupId: 'g-delete', date: '2026-03-15', start: '10:00', end: '11:00', repeatType: 'weekly' },
+      ]);
+
+      // Remove from Mar 8 onwards
+      await removeScheduleGroup('g-delete', '2026-03-08');
+
+      await fetchSchedules('2026-03-01', '2026-03-20');
+      const schedules = useScheduleStore.getState().schedules;
+
+      // Only Mar 1 should remain
+      expect(schedules.length).toBe(1);
+      expect(schedules[0].date).toBe('2026-03-01');
+    });
+
     it('migrates from localStorage to IndexedDB safely', async () => {
       // localStorage에 남아있던 구형 스케줄 모의
       useScheduleStore.setState({

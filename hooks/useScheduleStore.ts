@@ -30,6 +30,7 @@ export interface ScheduleState {
   // Schedule (IndexedDB 연동)
   fetchSchedules: (startDate: string, endDate: string) => Promise<void>;
   addSchedule: (schedule: Omit<Schedule, 'id'>) => Promise<void>;
+  addSchedules: (schedules: Omit<Schedule, 'id'>[]) => Promise<void>;
   updateSchedule: (id: string, schedule: Partial<Schedule>) => Promise<void>;
   updateScheduleGroup: (groupId: string, fromDate: string, schedule: Partial<Schedule>) => Promise<void>;
   removeSchedule: (id: string) => Promise<void>;
@@ -92,8 +93,18 @@ export const useScheduleStore = create<ScheduleState>()(
       addSchedule: async (schedule) => {
         const newSchedule = { ...schedule, id: `s-${Date.now()}` };
         await db.schedules.add(newSchedule);
-        // 상태 배열에도 동일 데이터 추가 (임시용)
         set((state) => ({ schedules: [...state.schedules, newSchedule] }));
+      },
+
+      addSchedules: async (schedulesToInsert) => {
+        const newSchedules = schedulesToInsert.map((s, idx) => ({
+          ...s,
+          id: `s-${Date.now()}-${idx}`
+        }));
+        await db.schedules.bulkAdd(newSchedules);
+
+        // Add matching schedules to current state (if they are within current view range, though here we just append all for simplicity. Ideally we'd re-fetch, but for now we'll append and let the active view filter/update on next fetch)
+        set((state) => ({ schedules: [...state.schedules, ...newSchedules] }));
       },
 
       updateSchedule: async (id, schedule) => {

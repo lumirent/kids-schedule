@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette } from 'lucide-react';
+import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette, Repeat, Layers } from 'lucide-react';
 import { useScheduleStore, type Schedule, type Academy, type Child } from '@/hooks/useScheduleStore';
-import { DAYS, COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
+import { COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
 import { cn, formatPhone } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import ChildModal from '@/components/modals/ChildModal';
 import { useTranslation } from '@/hooks/useTranslation';
-
+import { generateRepeatingSchedules } from '@/lib/schedule-utils';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,12 +22,14 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
     children,
     academies,
     addSchedule,
+    addSchedules,
     updateSchedule,
+    updateScheduleGroup,
     removeSchedule,
+    removeScheduleGroup,
     addAcademy,
     updateAcademy,
     removeAcademy,
-    showSunday
   } = useScheduleStore();
 
   const confirm = useConfirm();
@@ -44,6 +46,10 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
     shuttleOut: string;
     groupId: string | null;
     repeatType: 'none' | 'weekly' | 'monthly';
+    endCondition: 'date' | 'count';
+    endDate: string;
+    count: number;
+    repeatDays: number[];
   }>({
     childId: '',
     academyId: '',
@@ -53,7 +59,11 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
     shuttleIn: '',
     shuttleOut: '',
     groupId: null,
-    repeatType: 'none'
+    repeatType: 'none',
+    endCondition: 'date',
+    endDate: '',
+    count: 10,
+    repeatDays: [new Date().getDay()],
   });
 
   const [academyForm, setAcademyForm] = useState({
@@ -65,10 +75,12 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
     color: 'rose'
   });
 
+  // State for choosing how to edit/delete a grouped event
+  const [groupActionPrompt, setGroupActionPrompt] = useState<'update' | 'delete' | null>(null);
+
   useEffect(() => {
     if (type === 'schedule' && editingData) {
       const s = editingData as Schedule;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setScheduleForm({
         childId: s.childId,
         academyId: s.academyId,
@@ -78,7 +90,11 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
         shuttleIn: s.shuttleIn || '',
         shuttleOut: s.shuttleOut || '',
         groupId: s.groupId || null,
-        repeatType: s.repeatType || 'none'
+        repeatType: s.repeatType || 'none',
+        endCondition: 'date',
+        endDate: '',
+        count: 10,
+        repeatDays: [new Date(s.date).getDay()]
       });
     } else if (type === 'academy' && editingData) {
       const a = editingData as Academy;
@@ -94,46 +110,137 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
       setScheduleForm({
         childId: '', academyId: '', date: new Date().toISOString().split('T')[0],
         start: '13:00', end: '14:00', shuttleIn: '', shuttleOut: '',
-        groupId: null, repeatType: 'none'
+        groupId: null, repeatType: 'none', endCondition: 'date', endDate: '', count: 10, repeatDays: [new Date().getDay()]
       });
       setAcademyForm({ name: '', teachers: [{ name: '', contact: '' }], contact: '', price: '', paymentDay: '', color: 'rose' });
     }
+    setGroupActionPrompt(null);
   }, [type, editingData]);
 
   if (!type) return null;
 
   if (type === 'child') {
-    return (
-      <ChildModal
-        isOpen={true}
-        onClose={onClose}
-        editingChild={editingData as Child}
-      />
-    );
+    return <ChildModal isOpen={true} onClose={onClose} editingChild={editingData as Child} />;
   }
 
   const handleSaveSchedule = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!scheduleForm.childId || !scheduleForm.academyId) return;
+    if (!scheduleForm.childId || !scheduleForm.academyId) {
+      toast({
+        title: '입력 확인',
+        description: '자녀와 학원을 모두 선택해주세요.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (editingData) {
-      updateSchedule((editingData as Schedule).id, scheduleForm);
-      toast({
-        title: t('modal.scheduleUpdateSuccess'),
-        description: t('modal.scheduleUpdateDesc'),
-      });
+      if (scheduleForm.groupId) {
+        setGroupActionPrompt('update');
+      } else {
+        executeScheduleUpdate('single');
+      }
     } else {
-      addSchedule(scheduleForm);
+      // Create new schedule
+      const { endCondition, endDate, count, repeatType, repeatDays, ...baseSchedule } = scheduleForm;
+      if (repeatType === 'none') {
+        addSchedule({ ...baseSchedule, repeatType: 'none' });
+      } else {
+        const newGroupId = `g-${Date.now()}`;
+        const schedulesToInsert = generateRepeatingSchedules(
+          baseSchedule,
+          { repeatType, endCondition, endDate, count, repeatDays },
+          newGroupId
+        );
+        if (addSchedules) {
+          addSchedules(schedulesToInsert);
+        } else {
+          // Fallback if addSchedules isn't defined or we're mocking it without it
+          schedulesToInsert.forEach(s => addSchedule(s));
+        }
+      }
       toast({
-        title: t('modal.scheduleAddSuccess'),
-        description: t('modal.scheduleAddDesc'),
+        title: t('modal.scheduleAddSuccess') || '일정 등록 완료',
+        description: t('modal.scheduleAddDesc') || '성공적으로 등록되었습니다.',
       });
+      onClose();
+    }
+  };
+
+  const executeScheduleUpdate = (mode: 'single' | 'group') => {
+    const targetId = (editingData as Schedule).id;
+    const targetDate = (editingData as Schedule).date;
+    const { childId, academyId, date, start, end, shuttleIn, shuttleOut } = scheduleForm;
+    const updatePayload = { childId, academyId, date, start, end, shuttleIn, shuttleOut };
+
+    if (mode === 'group' && scheduleForm.groupId) {
+      updateScheduleGroup(scheduleForm.groupId, targetDate, updatePayload);
+      toast({ title: '일괄 수정 완료', description: '해당 날짜 이후의 일정이 모두 수정되었습니다.' });
+    } else {
+      updateSchedule(targetId, { ...updatePayload, groupId: mode === 'single' ? null : scheduleForm.groupId });
+      toast({ title: t('modal.scheduleUpdateSuccess') || '수정 완료', description: t('modal.scheduleUpdateDesc') || '일정이 수정되었습니다.' });
     }
     onClose();
   };
 
+  const executeScheduleDelete = (mode: 'single' | 'group') => {
+    const targetId = (editingData as Schedule).id;
+    const targetDate = (editingData as Schedule).date;
+
+    if (mode === 'group' && scheduleForm.groupId) {
+      removeScheduleGroup(scheduleForm.groupId, targetDate);
+      toast({ title: '일괄 삭제 완료', description: '해당 날짜 이후의 일정이 모두 삭제되었습니다.' });
+    } else {
+      removeSchedule(targetId);
+      toast({ title: t('modal.scheduleDeleteSuccess') || '삭제 완료', description: t('modal.scheduleDeleteDesc') || '일정이 삭제되었습니다.' });
+    }
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    if (!editingData) return;
+
+    if (type === 'schedule') {
+      if (scheduleForm.groupId) {
+        setGroupActionPrompt('delete');
+        return;
+      }
+
+      const ok = await confirm({
+        title: t('modal.deleteConfirmTitle') || '일정 삭제',
+        message: t('modal.deleteConfirmMessage') || '이 일정을 정말 삭제하시겠습니까?',
+        confirmText: t('common.delete') || '삭제',
+        variant: "danger"
+      });
+      if (!ok) return;
+      executeScheduleDelete('single');
+
+    } else {
+      const ok = await confirm({
+        title: t('modal.deleteConfirmTitle') || '학원 삭제',
+        message: t('modal.deleteConfirmMessage') || '정말 삭제하시겠습니까? 연결된 일정 내역이 모두 함께 삭제됩니다.',
+        confirmText: t('common.delete') || '삭제',
+        variant: "danger"
+      });
+      if (!ok) return;
+      if (editingData.id) {
+        removeAcademy((editingData as Academy).id!);
+        toast({ title: t('modal.academyDeleteSuccess'), description: t('modal.academyDeleteDesc') });
+      }
+      onClose();
+    }
+  };
+
   const handleSaveAcademy = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!academyForm.name) return;
+    if (!academyForm.name) {
+      toast({
+        title: '입력 확인',
+        description: '학원 이름을 입력해주세요.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     const data = {
       name: academyForm.name,
@@ -146,60 +253,55 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
 
     if (type === 'academy' && editingData && 'id' in editingData && editingData.id) {
       updateAcademy(editingData.id, data);
-      toast({
-        title: t('modal.academyUpdateSuccess'),
-        description: t('modal.academyUpdateDesc'),
-      });
+      toast({ title: t('modal.academyUpdateSuccess'), description: t('modal.academyUpdateDesc') });
     } else {
       addAcademy(data);
-      toast({
-        title: t('modal.academyAddSuccess'),
-        description: t('modal.academyAddDesc'),
-      });
+      toast({ title: t('modal.academyAddSuccess'), description: t('modal.academyAddDesc') });
     }
     onClose();
   };
 
-  const handleDelete = async () => {
-    if (!editingData) return;
-    const ok = await confirm({
-      title: t('modal.deleteConfirmTitle'),
-      message: t('modal.deleteConfirmMessage'),
-      confirmText: t('common.delete'),
-      variant: "danger"
-    });
-
-    if (!ok) return;
-
-    if (type === 'schedule') {
-      removeSchedule((editingData as Schedule).id);
-      toast({
-        title: t('modal.scheduleDeleteSuccess'),
-        description: t('modal.scheduleDeleteDesc'),
-      });
-    } else {
-      if (editingData.id) {
-        removeAcademy((editingData as Academy).id!);
-        toast({
-          title: t('modal.academyDeleteSuccess'),
-          description: t('modal.academyDeleteDesc'),
-        });
-      }
-    }
-    onClose();
-  };
+  // Intermediate Dialog for Group Actions
+  if (groupActionPrompt) {
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[210] flex items-center justify-center animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl w-[90%] max-w-sm p-6 space-y-6 shadow-2xl">
+          <div className="text-center space-y-2">
+            <Layers className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h3 className="text-xl font-black text-gray-800 dark:text-gray-100">
+              {groupActionPrompt === 'update' ? '반복 일정 수정' : '반복 일정 삭제'}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">
+              어떻게 적용할까요?
+            </p>
+          </div>
+          <div className="grid gap-3">
+            <Button variant="outline" className="w-full py-4 text-sm whitespace-normal h-auto rounded-2xl" onClick={() => groupActionPrompt === 'update' ? executeScheduleUpdate('single') : executeScheduleDelete('single')}>
+              이 일정만 {groupActionPrompt === 'update' ? '수정' : '삭제'} (그룹 해제)
+            </Button>
+            <Button className={cn("w-full py-4 text-sm whitespace-normal h-auto rounded-2xl", groupActionPrompt === 'delete' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-primary')} onClick={() => groupActionPrompt === 'update' ? executeScheduleUpdate('group') : executeScheduleDelete('group')}>
+              이 일정 및 향후 반복 일정 모두 {groupActionPrompt === 'update' ? '수정' : '삭제'}
+            </Button>
+          </div>
+          <Button variant="ghost" className="w-full rounded-2xl" onClick={() => setGroupActionPrompt(null)}>
+            취소
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-200 flex items-end animate-in fade-in duration-200">
-      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-6 animate-in slide-in-from-bottom duration-500 max-h-[95%] overflow-y-auto shadow-2xl relative transition-colors">
+      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-6 animate-in slide-in-from-bottom duration-500 max-h-[95vh] overflow-y-auto shadow-2xl relative transition-colors no-scrollbar">
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full" />
 
-        <div className="flex justify-between items-center mb-8 pt-2">
+        <div className="flex justify-between items-center mb-8 pt-2 sticky top-0 bg-background dark:bg-gray-900 z-10 py-2">
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-gray-800 dark:text-gray-100 tracking-tight">
               {editingData
-                ? (type === 'schedule' ? t('modal.editSchedule') : t('modal.editAcademy'))
-                : (type === 'schedule' ? t('modal.addSchedule') : t('modal.addAcademy'))}
+                ? (type === 'schedule' ? t('modal.editSchedule') || '일정 수정' : t('modal.editAcademy'))
+                : (type === 'schedule' ? t('modal.addSchedule') || '일정 등록' : t('modal.addAcademy'))}
             </h2>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">
               {t('modal.fillDetails')}
@@ -211,7 +313,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
         </div>
 
         {type === 'schedule' ? (
-          <form onSubmit={handleSaveSchedule} className="space-y-6 pb-10">
+          <form onSubmit={handleSaveSchedule} className="space-y-6 pb-20">
             <div className="grid grid-cols-2 gap-3">
               <Select
                 label={t('modal.childLabel')}
@@ -232,11 +334,19 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.dateLabel') || '날짜'}</label>
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.dateLabel') || '시작 날짜'}</label>
               <Input
                 type="date"
                 value={scheduleForm.date}
-                onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  const newDay = new Date(newDate).getDay();
+                  setScheduleForm(prev => ({
+                    ...prev,
+                    date: newDate,
+                    repeatDays: prev.repeatDays.includes(newDay) ? prev.repeatDays : [newDay]
+                  }));
+                }}
               />
             </div>
 
@@ -254,6 +364,86 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               </div>
             </div>
 
+            {/* Repeat configuration (Only shown when adding new schedule. When editing, we abstract this behind the grouping) */}
+            {!editingData && (
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Repeat size={14} /> 반복 설정
+                </label>
+
+                <Select
+                  value={scheduleForm.repeatType}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, repeatType: e.target.value as any })}
+                >
+                  <option value="none">반복 없음</option>
+                  <option value="weekly">매 주 반복</option>
+                  <option value="monthly">매 월 반복</option>
+                </Select>
+
+                {scheduleForm.repeatType === 'weekly' && (
+                  <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700/50 mt-3">
+                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">반복 요일</label>
+                    <div className="flex gap-1">
+                      {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            const nextDays = scheduleForm.repeatDays.includes(i)
+                              ? scheduleForm.repeatDays.filter(day => day !== i)
+                              : [...scheduleForm.repeatDays, i];
+                            // Prevent unselecting the last day
+                            if (nextDays.length === 0) return;
+                            setScheduleForm({ ...scheduleForm, repeatDays: nextDays });
+                          }}
+                          className={cn(
+                            "flex-1 h-9 rounded-xl font-bold text-xs transition-colors",
+                            scheduleForm.repeatDays.includes(i)
+                              ? "bg-primary text-white shadow-md shadow-primary/20"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
+                          )}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {scheduleForm.repeatType !== 'none' && (
+                  <div className="grid gap-3 pt-2">
+                    <Select
+                      value={scheduleForm.endCondition}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, endCondition: e.target.value as any })}
+                    >
+                      <option value="date">종료 날짜 지정</option>
+                      <option value="count">반복 횟수 지정</option>
+                    </Select>
+
+                    {scheduleForm.endCondition === 'date' ? (
+                      <Input
+                        type="date"
+                        value={scheduleForm.endDate}
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, endDate: e.target.value })}
+                        placeholder="종료 날짜를 선택하세요"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={scheduleForm.count.toString()}
+                          onChange={(e) => setScheduleForm({ ...scheduleForm, count: parseInt(e.target.value, 10) || 1 })}
+                        />
+                        <span className="text-xs font-bold text-gray-500 shrink-0">회 (반복일정 당)</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-4">
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-2"><Bus size={14} /> {t('modal.shuttleLabel')}</label>
               <div className="grid grid-cols-2 gap-3">
@@ -268,19 +458,20 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-4 sticky bottom-0 bg-background dark:bg-gray-900 z-10 py-4">
               {editingData && (
                 <Button type="button" variant="danger" onClick={handleDelete} className="flex-1 py-5 rounded-3xl">
                   {t('common.delete').toUpperCase()}
                 </Button>
               )}
-              <Button type="submit" className="flex-[2] py-5 rounded-3xl">
-                {editingData ? t('modal.updateScheduleBtn') : t('modal.saveScheduleBtn')}
+              <Button type="submit" className="flex-[2] py-5 rounded-3xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4 w-12" />
+                {editingData ? (t('modal.updateScheduleBtn') || '저장') : (t('modal.saveScheduleBtn') || '저장')}
               </Button>
             </div>
           </form>
         ) : (
-          <form onSubmit={handleSaveAcademy} className="space-y-6 pb-10">
+          <form onSubmit={handleSaveAcademy} className="space-y-6 pb-20">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.academyNameLabel')}</label>
               <Input type="text" placeholder={t('modal.academyNamePlaceholder')} value={academyForm.name} onChange={(e) => setAcademyForm({ ...academyForm, name: e.target.value })} />
@@ -289,7 +480,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
             <div className="space-y-4">
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 flex justify-between items-center">
                 {t('modal.teacherLabel')}
-                <button type="button" onClick={() => setAcademyForm({ ...academyForm, teachers: [...academyForm.teachers, { name: '', contact: '' }] })} className="text-primary flex items-center gap-1 font-black lowercase tracking-tight">
+                <button type="button" onClick={() => setAcademyForm({ ...academyForm, teachers: [...academyForm.teachers, { name: '', contact: '' }] })} className="text-primary flex items-center gap-1 font-black lowercase tracking-tight hover:scale-105 active:scale-95 transition-transform">
                   <PlusCircle size={14} /> {t('common.add')}
                 </button>
               </label>
@@ -375,13 +566,14 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-4 sticky bottom-0 bg-background dark:bg-gray-900 z-10 py-4">
               {editingData && (
                 <Button type="button" variant="danger" onClick={handleDelete} className="flex-1 py-5 rounded-3xl">
                   {t('common.delete').toUpperCase()}
                 </Button>
               )}
-              <Button type="submit" className="flex-[2] py-5 rounded-3xl">
+              <Button type="submit" className="flex-[2] py-5 rounded-3xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4 w-12" />
                 {editingData ? t('modal.updateInfoBtn') : t('modal.saveAcademyBtn')}
               </Button>
             </div>
