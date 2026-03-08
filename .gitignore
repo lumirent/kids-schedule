@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/docs
+GEMINI.md
 
 # next.js
 /.next/

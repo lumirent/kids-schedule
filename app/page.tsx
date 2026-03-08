@@ -1,65 +1,115 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+import React, { useState, useEffect } from 'react';
+import { Plus, Info } from 'lucide-react';
+import BottomNav from '@/components/layout/BottomNav';
+import HomeView from '@/components/views/HomeView';
+import ScheduleView from '@/components/views/ScheduleView';
+import AcademyView from '@/components/views/AcademyView';
+import SettingsView from '@/components/views/SettingsView';
+import ModalSystem from '@/components/modals/ModalSystem';
+import { useScheduleStore, type Schedule, type Academy, type Child } from '@/hooks/useScheduleStore';
+import { decodeData } from '@/lib/sharing';
+
+export default function App() {
+  const [view, setView] = useState('home');
+  const [modalType, setModalType] = useState<'schedule' | 'academy' | 'child' | null>(null);
+  const [editingData, setEditingData] = useState<Schedule | Academy | Child | null>(null);
+  const { isViewerMode, loadViewerData } = useScheduleStore();
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        console.log('SW registered:', registration);
+      });
+    }
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sharedData = params.get('data');
+      if (sharedData) {
+        const decoded = decodeData(sharedData);
+        if (decoded) {
+          loadViewerData(decoded);
+        }
+      }
+    }
+  }, [loadViewerData]);
+
+  const handleEdit = (type: 'schedule' | 'academy' | 'child', data: Schedule | Academy | Child) => {
+    if (isViewerMode) return;
+    setEditingData(data);
+    setModalType(type);
+  };
+
+  const handleAdd = (type: 'schedule' | 'academy' | 'child') => {
+    if (isViewerMode) return;
+    setEditingData(null);
+    setModalType(type);
+  };
+
+  const renderView = () => {
+    switch (view) {
+      case 'home': return <HomeView setView={setView} onAddChild={() => handleAdd('child')} />;
+      case 'schedule': return <ScheduleView onEdit={(s) => handleEdit('schedule', s)} />;
+      case 'academy': return (
+        <AcademyView
+          onAdd={() => handleAdd('academy')}
+          onEdit={(a) => handleEdit('academy', a)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      );
+      case 'settings': return <SettingsView onEditChild={(c) => handleEdit('child', c)} onAddChild={() => handleAdd('child')} />;
+      default: return <HomeView setView={setView} onAddChild={() => handleAdd('child')} />;
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-background text-foreground max-w-md mx-auto shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden relative border-x border-border/50">
+      {isViewerMode && (
+        <div className="bg-primary text-white text-[10px] font-bold py-1.5 px-4 flex justify-between items-center shrink-0 z-[60]">
+          <div className="flex items-center gap-1.5 uppercase tracking-widest">
+            <Info size={12} /> Viewer Mode
+          </div>
+          <button
+            onClick={() => window.location.href = window.location.pathname}
+            className="underline opacity-80 hover:opacity-100 transition-opacity"
+          >
+            Exit
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      <header className="px-6 py-5 glass sticky top-0 flex justify-between items-center shrink-0 z-50">
+        <h1 className="text-xl font-black tracking-tight text-primary">Kids Schedule</h1>
+        {!isViewerMode && (
+          <button
+            onClick={() => handleAdd('schedule')}
+            aria-label="Add schedule"
+            className="w-10 h-10 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <Plus size={24} />
+          </button>
+        )}
+      </header>
+
+      <main className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+        <div className="animate-slide-up">
+          {renderView()}
         </div>
       </main>
+
+      <BottomNav currentView={view} setView={setView} />
+
+      <ModalSystem
+        type={modalType}
+        onClose={() => setModalType(null)}
+        editingData={editingData}
+      />
     </div>
   );
 }

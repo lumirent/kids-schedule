@@ -1,0 +1,38 @@
+{
+  "name": "Kids Schedule",
+  "short_name": "KidsSched",
+  "description": "자녀 등하원 일정 관리 서비스",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/file.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/file.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/file.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "일정 확인",
+      "short_name": "일정",
+      "url": "/?view=schedule",
+      "icons": [{ "src": "/file.svg", "sizes": "192x192" }]
+    }
+  ]
+}
