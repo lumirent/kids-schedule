@@ -17,8 +17,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={cn(
-            "w-full bg-muted dark:bg-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary/20 rounded-2xl px-5 py-4 text-sm font-bold outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600",
-            icon && "pl-12",
+            "w-full bg-muted dark:bg-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary/20 rounded-2xl px-4 py-3.5 text-sm font-bold outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600",
+            icon && "pl-11",
             className
           )}
           {...props}
@@ -46,7 +46,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            "w-full bg-muted dark:bg-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary/20 rounded-2xl px-4 py-4 text-sm font-bold outline-none transition-all appearance-none cursor-pointer",
+            "w-full bg-muted dark:bg-gray-800 dark:text-gray-200 border-2 border-transparent focus:border-primary/20 rounded-2xl px-4 py-3.5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer",
             className
           )}
           {...props}

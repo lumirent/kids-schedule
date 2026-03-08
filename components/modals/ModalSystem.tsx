@@ -116,13 +116,18 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
   const handleSaveAcademy = (e: React.FormEvent) => {
     e.preventDefault();
     if (!academyForm.name) return;
+    
     const data = {
-      ...academyForm,
+      name: academyForm.name,
+      contact: academyForm.contact,
       price: Number(academyForm.price) || 0,
-      teachers: academyForm.teachers.filter(teacher => teacher.name.trim() !== '')
+      paymentDay: academyForm.paymentDay,
+      color: academyForm.color,
+      teachers: academyForm.teachers.filter(teacher => teacher && typeof teacher.name === 'string' && teacher.name.trim() !== '')
     };
-    if (editingData) {
-      updateAcademy((editingData as Academy).id, data);
+
+    if (type === 'academy' && editingData && 'id' in editingData) {
+      updateAcademy(editingData.id, data);
       toast({
         title: t('modal.academyUpdateSuccess'),
         description: t('modal.academyUpdateDesc'),
@@ -166,7 +171,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[200] flex items-end animate-in fade-in duration-200">
-      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-8 animate-in slide-in-from-bottom duration-500 max-h-[95%] overflow-y-auto shadow-2xl relative transition-colors">
+      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-6 animate-in slide-in-from-bottom duration-500 max-h-[95%] overflow-y-auto shadow-2xl relative transition-colors">
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full" />
         
         <div className="flex justify-between items-center mb-8 pt-2">
@@ -187,7 +192,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
         
         {type === 'schedule' ? (
           <form onSubmit={handleSaveSchedule} className="space-y-6 pb-10">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Select 
                 label={t('modal.childLabel')} 
                 value={scheduleForm.childId} 
@@ -229,15 +234,21 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
 
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.timeLabel')}</label>
-              <div className="grid grid-cols-2 gap-4">
-                <Input type="time" icon={<Clock size={16} />} value={scheduleForm.start} onChange={(e) => setScheduleForm({...scheduleForm, start: e.target.value})}/>
-                <Input type="time" icon={<Clock size={16} />} value={scheduleForm.end} onChange={(e) => setScheduleForm({...scheduleForm, end: e.target.value})}/>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.startLabel')}</p>
+                  <Input type="time" value={scheduleForm.start} onChange={(e) => setScheduleForm({...scheduleForm, start: e.target.value})}/>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.endLabel')}</p>
+                  <Input type="time" value={scheduleForm.end} onChange={(e) => setScheduleForm({...scheduleForm, end: e.target.value})}/>
+                </div>
               </div>
             </div>
 
             <div className="space-y-4">
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-2"><Bus size={14} /> {t('modal.shuttleLabel')}</label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 font-black ml-1 uppercase">{t('modal.shuttleInLabel')}</p>
                   <Input type="time" className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30" value={scheduleForm.shuttleIn} onChange={(e) => setScheduleForm({...scheduleForm, shuttleIn: e.target.value})}/>

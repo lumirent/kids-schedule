@@ -68,13 +68,13 @@ export const INITIAL_SCHEDULES = [
 export const COLOR_OPTIONS = ['pink', 'blue', 'indigo', 'rose', 'amber', 'emerald', 'violet'] as const;
 
 export const COLOR_MAP = {
-  pink: 'bg-pink-50 text-pink-600 border-pink-100/50 dark:bg-pink-900/20 dark:text-pink-300 dark:border-pink-800/30',
-  blue: 'bg-blue-50 text-blue-600 border-blue-100/50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/30',
-  indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100/50 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800/30',
-  rose: 'bg-rose-50 text-rose-600 border-rose-100/50 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/30',
-  amber: 'bg-amber-50 text-amber-600 border-amber-100/50 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30',
-  emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100/50 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/30',
-  violet: 'bg-violet-50 text-violet-600 border-violet-100/50 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800/30'
+  pink: 'bg-pink-100 text-pink-700 border-pink-200/50 dark:bg-pink-900/40 dark:text-pink-200 dark:border-pink-800/50',
+  blue: 'bg-blue-100 text-blue-700 border-blue-200/50 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-800/50',
+  indigo: 'bg-indigo-100 text-indigo-700 border-indigo-200/50 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-800/50',
+  rose: 'bg-rose-100 text-rose-700 border-rose-200/50 dark:bg-rose-900/40 dark:text-rose-200 dark:border-rose-800/50',
+  amber: 'bg-amber-100 text-amber-700 border-amber-200/50 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800/50',
+  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200/50 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-800/50',
+  violet: 'bg-violet-100 text-violet-700 border-violet-200/50 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-800/50'
 };
 
 // 선택된 상태를 위한 전용 맵 (라이트모드에서 흰색 글자 보장)
@@ -89,11 +89,11 @@ export const SELECTED_COLOR_MAP = {
 };
 
 export const COLOR_HEX = {
-  pink: '#fdf2f8',
-  blue: '#eff6ff',
-  indigo: '#eef2ff',
-  rose: '#fff1f2',
-  amber: '#fffbeb',
-  emerald: '#ecfdf5',
-  violet: '#f5f3ff'
+  pink: '#ec4899',   // pink-500
+  blue: '#3b82f6',   // blue-500
+  indigo: '#6366f1', // indigo-500
+  rose: '#f43f5e',   // rose-500
+  amber: '#f59e0b',  // amber-500
+  emerald: '#10b981', // emerald-500
+  violet: '#8b5cf6'  // violet-500
 };

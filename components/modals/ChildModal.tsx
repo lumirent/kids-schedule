@@ -50,7 +50,7 @@ export default function ChildModal({ isOpen, onClose, editingChild }: ChildModal
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[200] flex items-end animate-in fade-in duration-200">
-      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-8 animate-in slide-in-from-bottom duration-500 max-h-[95%] overflow-y-auto shadow-2xl relative transition-colors">
+      <div className="w-full bg-background dark:bg-gray-900 rounded-t-[3rem] p-6 animate-in slide-in-from-bottom duration-500 max-h-[95%] overflow-y-auto shadow-2xl relative transition-colors">
         {/* Handle for sheet feel */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full" />
 

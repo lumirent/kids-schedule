@@ -65,6 +65,7 @@ export interface ScheduleState {
   resetAll: () => void;
   importData: (data: { children: Child[], academies: Academy[], schedules: Schedule[] }) => void;
   loadViewerData: (data: { children: Child[], academies: Academy[], schedules: Schedule[] }) => void;
+  setIsViewerMode: (isViewer: boolean) => void;
 }
 
 export const useScheduleStore = create<ScheduleState>()(
@@ -79,6 +80,7 @@ export const useScheduleStore = create<ScheduleState>()(
 
       setSelectedChildId: (id) => set({ selectedChildId: id }),
       setShowSunday: (show) => set({ showSunday: show }),
+      setIsViewerMode: (isViewer) => set({ isViewerMode: isViewer }),
       
       // Children Actions
       addChild: (child) => set((state) => ({
@@ -143,17 +145,11 @@ export const useScheduleStore = create<ScheduleState>()(
     {
       name: 'kids-schedule-storage',
       storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : ({} as Storage))),
-      // Don't persist the isViewerMode flag as true across sessions
-      // if the user reloads without the URL param.
-      // But actually, if we load viewer data, we don't want to overwrite 
-      // the user's local data permanently unless they explicitly "Save".
-      // Let's refine: For viewer mode, we should ideally not persist 
-      // into the same key, OR keep a flag. 
-      // A better way for "Viewer Mode" is to avoid persistence.
-      onRehydrateStorage: () => {
-        // If we were in viewer mode, we might want to go back to normal
-        // on full refresh if URL is gone. Handled in app/page.tsx.
-      }
+      partialize: (state) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { isViewerMode, ...rest } = state;
+        return rest;
+      },
     }
   )
 );

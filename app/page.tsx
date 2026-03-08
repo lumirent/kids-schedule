@@ -15,7 +15,7 @@ export default function App() {
   const [view, setView] = useState('home');
   const [modalType, setModalType] = useState<'schedule' | 'academy' | 'child' | null>(null);
   const [editingData, setEditingData] = useState<Schedule | Academy | Child | null>(null);
-  const { isViewerMode, loadViewerData } = useScheduleStore();
+  const { isViewerMode, loadViewerData, setIsViewerMode } = useScheduleStore();
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -37,9 +37,14 @@ export default function App() {
         if (decoded) {
           loadViewerData(decoded);
         }
+      } else if (isViewerMode) {
+        // Clear viewer mode if URL param is gone
+        setIsViewerMode(false);
+        // Force reload to restore user data from localStorage
+        window.location.reload();
       }
     }
-  }, [loadViewerData]);
+  }, [loadViewerData, isViewerMode, setIsViewerMode]);
 
   const handleEdit = (type: 'schedule' | 'academy' | 'child', data: Schedule | Academy | Child) => {
     if (isViewerMode) return;
