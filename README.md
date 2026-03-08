@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kids Schedule (자녀 등하원 일정 관리 서비스)
+
+Kids Schedule is a local-first, privacy-focused scheduling application designed for parents to manage complex academy and shuttle schedules for multiple children. It prioritizes offline usability, ease of sharing via encoded URLs, and a mobile-first user experience.
+
+![Kids Schedule](public/icon512_maskable.png)
+
+## Features
+
+- **Local-First & Privacy-Focused**: All primary data is stored seamlessly within your browser (IndexedDB via Dexie.js). No accounts, no cloud dependencies by default.
+- **Advanced Scheduling**: Supports date-based events, specific day-of-week recurring schedules, and group editing/deletion.
+- **Drag & Drop**: Easily intuitively reorder or manage schedules on a weekly timeline view.
+- **URL-based Sharing**: Schedules can be safely encoded into a compressed Base64 string and shared via URL. Recipients enter a "Viewer Mode" for read-only access.
+- **Mobile-First Design**: Optimized for mobile viewports, featuring glassmorphism elements, smooth animations, and a modern app-like feel.
+- **PWA Ready**: Installable as a Progressive Web App for offline access and native-like experience.
+- **Dark Mode**: Comes with built-in dark mode and theme persistence.
+- **i18n Support**: Currently supports Korean and English translations.
+
+## Technologies Used
+
+- **Framework**: Next.js 16 (App Router)
+- **Library**: React 19
+- **Styling**: Tailwind CSS 4
+- **State Management**: Zustand 5 + LocalStorage Persist
+- **Database**: Dexie.js (IndexedDB)
+- **Utilities**: `pako` (Zlib compression), `@hello-pangea/dnd` (Drag & Drop), Lucide React (Icons)
+- **Testing**: Vitest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+You need `pnpm` installed to manage dependencies.
+
+### Installation
+
+Clone the repository and install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+git clone https://github.com/your-username/kids-schedule.git
+cd kids-schedule
+pnpm install
+```
+
+### Development Server
+
+Run the development server locally:
+
+```bash
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build & Production Status
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To build the application for production:
 
-## Learn More
+```bash
+pnpm build
+pnpm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Testing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run the automated test suite using Vitest:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm test
+```
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
