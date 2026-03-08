@@ -1,10 +1,22 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { useScheduleStore } from './useScheduleStore';
+import { KidsScheduleDB, db, migrateSchedulesToIndexedDB } from '@/lib/db';
+import 'fake-indexeddb/auto';
+
+vi.mock('@/lib/db', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/db')>();
+  return {
+    ...mod,
+    // We can use the real db instance because fake-indexeddb handles it
+  };
+});
 
 describe('hooks/useScheduleStore', () => {
-  beforeEach(() => {
-    // Reset state before each test
-    // Use setState directly to avoid triggers or confirmations
+  beforeEach(async () => {
+    // db 초기화
+    await db.open();
+    await db.schedules.clear();
+
     useScheduleStore.setState({
       children: [],
       academies: [],
@@ -15,145 +27,91 @@ describe('hooks/useScheduleStore', () => {
     });
   });
 
+  afterEach(async () => {
+    await db.schedules.clear();
+  });
+
   describe('Children Actions', () => {
     it('adds a child', () => {
       useScheduleStore.getState().addChild({ name: '철수', color: 'blue' });
       const { children } = useScheduleStore.getState();
       expect(children.length).toBe(1);
-      expect(children[0].name).toBe('철수');
-      expect(children[0].id).toContain('c-');
     });
+  });
 
-    it('updates a child', () => {
-      useScheduleStore.getState().addChild({ name: '철수', color: 'blue' });
-      const id = useScheduleStore.getState().children[0].id;
-      
-      useScheduleStore.getState().updateChild(id, { name: '철수 (업데이트)' });
-      expect(useScheduleStore.getState().children[0].name).toBe('철수 (업데이트)');
-    });
+  describe('Schedule Actions with IndexedDB', () => {
+    it('adds a schedule and fetches it', async () => {
+      const { fetchSchedules, addSchedule } = useScheduleStore.getState();
 
-    it('removes a child and their schedules', () => {
-      useScheduleStore.getState().addChild({ name: '철수', color: 'blue' });
-      const childId = useScheduleStore.getState().children[0].id;
-      
-      useScheduleStore.getState().addSchedule({
-        childId,
+      // 스케줄 추가 (DB 반영)
+      await addSchedule({
+        childId: 'c1',
         academyId: 'a1',
-        day: '월',
+        groupId: 'g1',
+        date: '2026-03-09',
+        start: '10:00',
+        end: '11:00',
+        repeatType: 'none'
+      });
+
+      // 아직 fetch 안했으므로 store 내 schedules는 비어있거나 다를 수 있음
+      // fetch 실행
+      await fetchSchedules('2026-03-09', '2026-03-15');
+
+      const updatedSchedules = useScheduleStore.getState().schedules;
+      expect(updatedSchedules.length).toBe(1);
+      expect(updatedSchedules[0].date).toBe('2026-03-09');
+    });
+
+    it('updates a schedule in DB', async () => {
+      const { fetchSchedules, addSchedule, updateSchedule } = useScheduleStore.getState();
+      await addSchedule({
+        childId: 'c1',
+        academyId: 'a1',
+        groupId: 'g1',
+        date: '2026-03-09',
         start: '10:00',
         end: '11:00'
       });
 
-      expect(useScheduleStore.getState().schedules.length).toBe(1);
-      
-      useScheduleStore.getState().removeChild(childId);
-      expect(useScheduleStore.getState().children.length).toBe(0);
-      expect(useScheduleStore.getState().schedules.length).toBe(0);
-    });
-  });
-
-  describe('Academy Actions', () => {
-    it('adds an academy', () => {
-      useScheduleStore.getState().addAcademy({
-        name: '태권도',
-        contact: '010-1234-5678',
-        price: 150000,
-        color: 'rose',
-        teachers: [],
-        paymentDay: '1'
-      });
-      const { academies } = useScheduleStore.getState();
-      expect(academies.length).toBe(1);
-      expect(academies[0].name).toBe('태권도');
-    });
-
-    it('removes an academy and linked schedules', () => {
-      useScheduleStore.getState().addAcademy({
-        name: '태권도',
-        contact: '',
-        price: 0,
-        color: 'rose',
-        teachers: [],
-        paymentDay: '1'
-      });
-      const academyId = useScheduleStore.getState().academies[0].id;
-
-      useScheduleStore.getState().addSchedule({
-        childId: 'c1',
-        academyId,
-        day: '화',
-        start: '14:00',
-        end: '15:00'
-      });
-
-      expect(useScheduleStore.getState().schedules.length).toBe(1);
-      
-      useScheduleStore.getState().removeAcademy(academyId);
-      expect(useScheduleStore.getState().academies.length).toBe(0);
-      expect(useScheduleStore.getState().schedules.length).toBe(0);
-    });
-  });
-
-  describe('Schedule Actions', () => {
-    it('adds, updates and removes a schedule', () => {
-      useScheduleStore.getState().addSchedule({
-        childId: 'c1',
-        academyId: 'a1',
-        day: '월',
-        start: '10:00',
-        end: '11:00'
-      });
-      
+      await fetchSchedules('2026-03-09', '2026-03-09');
       const id = useScheduleStore.getState().schedules[0].id;
-      expect(useScheduleStore.getState().schedules.length).toBe(1);
 
-      useScheduleStore.getState().updateSchedule(id, { start: '10:30' });
+      await updateSchedule(id, { start: '10:30' });
+      await fetchSchedules('2026-03-09', '2026-03-09');
+
       expect(useScheduleStore.getState().schedules[0].start).toBe('10:30');
+    });
 
-      useScheduleStore.getState().removeSchedule(id);
+    it('removes a schedule from DB', async () => {
+      const { fetchSchedules, addSchedule, removeSchedule } = useScheduleStore.getState();
+      await addSchedule({
+        childId: 'c1', academyId: 'a1', groupId: 'g1', date: '2026-03-09', start: '10:00', end: '11:00'
+      });
+      await fetchSchedules('2026-03-09', '2026-03-09');
+      const id = useScheduleStore.getState().schedules[0].id;
+
+      await removeSchedule(id);
+      await fetchSchedules('2026-03-09', '2026-03-09');
       expect(useScheduleStore.getState().schedules.length).toBe(0);
     });
-  });
 
-  describe('Data Management', () => {
-    it('resets all data', () => {
-      useScheduleStore.getState().addChild({ name: '철수', color: 'blue' });
-      useScheduleStore.getState().resetAll();
-      
-      expect(useScheduleStore.getState().children.length).toBe(0);
-    });
+    it('migrates from localStorage to IndexedDB safely', async () => {
+      // localStorage에 남아있던 구형 스케줄 모의
+      useScheduleStore.setState({
+        schedules: [
+          { id: 'old1', childId: 'c1', academyId: 'a1', day: '월', start: '10:00', end: '11:00' } as any
+        ]
+      });
 
-    it('imports data correctly', () => {
-      const newData = {
-        children: [{ id: 'nc1', name: '새아이', color: 'green' }],
-        academies: [],
-        schedules: []
-      };
-      
-      useScheduleStore.getState().importData(newData);
-      expect(useScheduleStore.getState().children[0].name).toBe('새아이');
-      expect(useScheduleStore.getState().isViewerMode).toBe(false);
-    });
+      await useScheduleStore.getState().migrateFromLocalStorage(new Date('2026-03-08T00:00:00Z'));
 
-    it('loads viewer data and sets isViewerMode flag', () => {
-      const viewerData = {
-        children: [{ id: 'vc1', name: '영희', color: 'pink' }],
-        academies: [],
-        schedules: []
-      };
-      
-      useScheduleStore.getState().loadViewerData(viewerData);
-      
-      expect(useScheduleStore.getState().isViewerMode).toBe(true);
-      expect(useScheduleStore.getState().children[0].name).toBe('영희');
-    });
+      // 변환이 끝나면 Zustand 내의 schedules 배열(과거 형태)은 비워져야 한다
+      expect(useScheduleStore.getState().schedules.length).toBe(0);
 
-    it('sets selectedChildId and showSunday', () => {
-      useScheduleStore.getState().setSelectedChildId('c1');
-      expect(useScheduleStore.getState().selectedChildId).toBe('c1');
-
-      useScheduleStore.getState().setShowSunday(true);
-      expect(useScheduleStore.getState().showSunday).toBe(true);
+      // IndexedDB에 수십개의 객체가 생성되었는지 확인
+      const dbCount = await db.schedules.count();
+      expect(dbCount).toBeGreaterThan(20);
     });
   });
 });

@@ -4,16 +4,16 @@ import { encodeData, decodeData, type SharingData } from './sharing';
 describe('lib/sharing', () => {
   const sampleData: SharingData = {
     children: [{ id: '1', name: '은채', color: 'pink' }],
-    academies: [{ 
-      id: 'a1', 
-      name: '미술', 
-      contact: '010', 
-      price: 100, 
-      color: 'rose', 
-      teachers: [{ name: '샘', contact: '' }], 
-      paymentDay: '1' 
+    academies: [{
+      id: 'a1',
+      name: '미술',
+      contact: '010',
+      price: 100,
+      color: 'rose',
+      teachers: [{ name: '샘', contact: '' }],
+      paymentDay: '1'
     }],
-    schedules: [{ id: 's1', childId: '1', academyId: 'a1', day: '월', start: '10:00', end: '11:00' }]
+    schedules: [{ id: 's1', childId: '1', academyId: 'a1', date: '2026-03-09', start: '10:00', end: '11:00', groupId: null, repeatType: 'none' }]
   };
 
   it('should encode and decode data correctly', () => {

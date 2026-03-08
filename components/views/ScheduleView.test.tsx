@@ -13,9 +13,9 @@ vi.mock('@/hooks/useScheduleStore', () => ({
 // Mock @hello-pangea/dnd because it's hard to test in vitest/jsdom
 vi.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Droppable: ({ children }: { children: (provided: { droppableProps: object; innerRef: (el: HTMLElement | null) => void; placeholder: React.ReactNode }, snapshot: { isDraggingOver: boolean }) => React.ReactNode }) => 
+  Droppable: ({ children }: { children: (provided: { droppableProps: object; innerRef: (el: HTMLElement | null) => void; placeholder: React.ReactNode }, snapshot: { isDraggingOver: boolean }) => React.ReactNode }) =>
     children({ droppableProps: {}, innerRef: vi.fn(), placeholder: null }, { isDraggingOver: false }),
-  Draggable: ({ children }: { children: (provided: { draggableProps: { style: object }; dragHandleProps: object; innerRef: (el: HTMLElement | null) => void }, snapshot: { isDragging: boolean }) => React.ReactNode }) => 
+  Draggable: ({ children }: { children: (provided: { draggableProps: { style: object }; dragHandleProps: object; innerRef: (el: HTMLElement | null) => void }, snapshot: { isDragging: boolean }) => React.ReactNode }) =>
     children({ draggableProps: { style: {} }, dragHandleProps: {}, innerRef: vi.fn() }, { isDragging: false }),
 }));
 
@@ -27,16 +27,18 @@ describe('ScheduleView', () => {
       id: 's1',
       childId: 'c1',
       academyId: 'a1',
-      day: '월',
+      date: '2026-03-09', // Monday
       start: '14:00',
       end: '15:00',
       shuttleIn: '13:40',
       shuttleOut: '15:20',
+      groupId: null,
+      repeatType: 'none' as const,
     },
   ];
 
   const mockAcademies = [
-    { id: 'a1', name: 'Art Class', color: 'rose' },
+    { id: 'a1', name: 'Art Class', color: 'rose', contact: '', price: 0, teachers: [], paymentDay: '' },
   ];
 
   const mockChildren = [
@@ -53,7 +55,7 @@ describe('ScheduleView', () => {
       showSunday: false,
       updateSchedule: vi.fn(),
       isViewerMode: false,
-    } as Partial<ScheduleState>);
+    } as unknown as Partial<ScheduleState>);
 
     render(<ScheduleView onEdit={vi.fn()} />);
 
