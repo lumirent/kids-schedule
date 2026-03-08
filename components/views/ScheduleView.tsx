@@ -3,7 +3,7 @@ import { Bus, Download, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIc
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useScheduleStore, type Schedule } from '@/hooks/useScheduleStore';
 import { TIME_SLOTS, SELECTED_COLOR_MAP } from '@/lib/constants';
-import { timeToMinutes, cn, getScheduleColor } from '@/lib/utils';
+import { timeToMinutes, cn, getScheduleColor, formatDateStr } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { exportToPng } from '@/lib/export-utils';
 
@@ -46,8 +46,8 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
   const activeDates = showSunday ? weekDates : weekDates.slice(1);
 
   // Date strings for fetching logic
-  const startDateStr = weekDates[0].toISOString().split('T')[0];
-  const endDateStr = weekDates[6].toISOString().split('T')[0];
+  const startDateStr = formatDateStr(weekDates[0]);
+  const endDateStr = formatDateStr(weekDates[6]);
 
   useEffect(() => {
     if (!isViewerMode && fetchSchedules) {
@@ -71,7 +71,7 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
   const scheduleByDate = useMemo(() => {
     const map: Record<string, typeof schedules> = {};
     activeDates.forEach(d => {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = formatDateStr(d);
       map[dateStr] = [];
     });
     filteredSchedules.forEach(s => {
@@ -92,7 +92,7 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
   const downloadImage = async () => {
     if (!scheduleRef.current) return;
     const childName = selectedChildId === 'all' ? '전체' : children.find(c => c.id === selectedChildId)?.name || '';
-    const filename = `kids-schedule-${childName}-${currentDate.toISOString().split('T')[0]}.png`;
+    const filename = `kids-schedule-${childName}-${formatDateStr(currentDate)}.png`;
 
     await exportToPng(scheduleRef.current, filename);
   };
@@ -182,9 +182,9 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
 
             {/* Day Columns */}
             {activeDates.map(dateObj => {
-              const dateStr = dateObj.toISOString().split('T')[0];
+              const dateStr = formatDateStr(dateObj);
               const dayNameKR = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
-              const isToday = new Date().toISOString().split('T')[0] === dateStr;
+              const isToday = formatDateStr(new Date()) === dateStr;
 
               return (
                 <Droppable droppableId={dateStr} key={dateStr}>

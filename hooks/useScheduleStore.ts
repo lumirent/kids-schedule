@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { INITIAL_CHILDREN, INITIAL_ACADEMIES } from '@/lib/constants';
 import { db, migrateSchedulesToIndexedDB, type Child, type Academy, type Schedule } from '@/lib/db';
+import { formatDateStr } from '@/lib/utils';
 
 export type { Child, Academy, Schedule };
 
@@ -119,15 +120,42 @@ export const useScheduleStore = create<ScheduleState>()(
         const groupData = await db.schedules.where('groupId').equals(groupId).toArray();
         const targets = groupData.filter(s => s.date >= fromDate);
 
+        // Calculate offset if date represents a shift
+        let diffMs = 0;
+        if (schedule.date && schedule.date !== fromDate) {
+          const fromTime = new Date(fromDate).getTime();
+          const newTime = new Date(schedule.date).getTime();
+          diffMs = newTime - fromTime;
+        }
+
+        const updatedTargets: Schedule[] = [];
+
         await db.transaction('rw', db.schedules, async () => {
           for (const target of targets) {
-            await db.schedules.update(target.id, schedule);
+            const shiftParams = { ...schedule };
+            if (diffMs !== 0) {
+              const targetTime = new Date(target.date).getTime();
+              const shiftedDate = new Date(targetTime + diffMs);
+              shiftParams.date = formatDateStr(shiftedDate);
+            } else {
+              delete shiftParams.date; // Do not overwrite if no shift, keep original target.date
+            }
+
+            await db.schedules.update(target.id, shiftParams);
+            updatedTargets.push({ ...target, ...shiftParams });
           }
         });
 
-        set((state) => ({
-          schedules: state.schedules.map(s => (s.groupId === groupId && s.date >= fromDate) ? { ...s, ...schedule } : s)
-        }));
+        set((state) => {
+          const newSchedules = state.schedules.map(s => {
+            if (s.groupId === groupId && s.date >= fromDate) {
+              const updated = updatedTargets.find(t => t.id === s.id);
+              return updated || s;
+            }
+            return s;
+          });
+          return { schedules: newSchedules };
+        });
       },
 
       removeSchedule: async (id) => {

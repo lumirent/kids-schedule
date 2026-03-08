@@ -45,6 +45,7 @@ export const translations = {
       locale: 'ko-KR',
     },
     schedule: {
+      thisWeek: '이번 주',
       pickup: '승차',
       dropoff: '하차',
       days: {
@@ -87,6 +88,7 @@ export const translations = {
       saveButton: '프로필 저장',
     },
     modal: {
+      dateLabel: '날짜',
       editSchedule: '일정 수정',
       addSchedule: '새 일정 등록',
       editAcademy: '학원 정보 수정',
@@ -215,6 +217,7 @@ export const translations = {
       locale: 'en-US',
     },
     schedule: {
+      thisWeek: 'This Week',
       pickup: 'Pick up',
       dropoff: 'Drop off',
       days: {
@@ -257,6 +260,7 @@ export const translations = {
       saveButton: 'SAVE PROFILE',
     },
     modal: {
+      dateLabel: 'Date',
       editSchedule: 'Edit Schedule',
       addSchedule: 'Add New Schedule',
       editAcademy: 'Edit Academy Info',
@@ -385,6 +389,7 @@ export const translations = {
       locale: 'ja-JP',
     },
     schedule: {
+      thisWeek: '今週',
       pickup: '乗車',
       dropoff: '降車',
       days: {
@@ -427,6 +432,7 @@ export const translations = {
       saveButton: 'プロフィール保存',
     },
     modal: {
+      dateLabel: '日付',
       editSchedule: 'スケジュールの編集',
       addSchedule: '新しいスケジュールの登録',
       editAcademy: '塾情報の修正',
@@ -555,6 +561,7 @@ export const translations = {
       locale: 'zh-CN',
     },
     schedule: {
+      thisWeek: '本周',
       pickup: '上车',
       dropoff: '下车',
       days: {
@@ -597,6 +604,7 @@ export const translations = {
       saveButton: '保存资料',
     },
     modal: {
+      dateLabel: '日期',
       editSchedule: '修改日程',
       addSchedule: '注册新日程',
       editAcademy: '修改辅导班信息',

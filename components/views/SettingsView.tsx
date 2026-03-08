@@ -3,7 +3,7 @@ import { Calendar, ChevronRight, Plus, Edit2, Download, Upload, Link, Moon, Sun,
 import { useScheduleStore, type Child } from '@/hooks/useScheduleStore';
 import { useConfigStore, type Language } from '@/hooks/useConfigStore';
 import { COLOR_MAP } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { cn, formatDateStr } from '@/lib/utils';
 import { encodeData } from '@/lib/sharing';
 import { useToast } from '@/hooks/use-toast';
 import { useConfirm } from '@/hooks/use-confirm';
@@ -36,7 +36,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
     const data = { children, academies, schedules };
     const encoded = encodeData(data);
     const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: t('settings.shareTitle'),
@@ -59,7 +59,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `kids-schedule-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `kids-schedule-backup-${formatDateStr(new Date())}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -78,7 +78,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
           confirmText: t('common.confirm'),
           variant: "danger"
         });
-        
+
         if (ok) {
           importData(json);
           toast({
@@ -104,7 +104,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
       confirmText: t('common.reset'),
       variant: "danger"
     });
-    
+
     if (ok) {
       resetAll();
       toast({
@@ -120,7 +120,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
         <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4 px-1 flex justify-between items-center">
           {t('settings.childManagement')}
           {!isViewerMode && (
-            <button 
+            <button
               onClick={handleAddChild}
               className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-bold lowercase"
             >
@@ -148,7 +148,7 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
                 </div>
               </div>
               {!isViewerMode && (
-                <button 
+                <button
                   onClick={() => handleEditChild(child)}
                   className="p-2 text-gray-300 dark:text-gray-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
@@ -177,8 +177,8 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{t('settings.showSundayDesc')}</p>
               </div>
             </div>
-            <button 
-              onClick={() => setShowSunday(!showSunday)} 
+            <button
+              onClick={() => setShowSunday(!showSunday)}
               disabled={isViewerMode}
               className={cn(
                 "w-12 h-6 rounded-full p-1 transition-all flex items-center",
@@ -207,8 +207,8 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
                   onClick={() => setTheme(t_key)}
                   className={cn(
                     "flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize",
-                    theme === t_key 
-                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm" 
+                    theme === t_key
+                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm"
                       : "text-gray-500 dark:text-gray-400 hover:text-gray-600"
                   )}
                 >
@@ -240,8 +240,8 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
                   onClick={() => setLanguage(lang.id as Language)}
                   className={cn(
                     "flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all",
-                    language === lang.id 
-                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm" 
+                    language === lang.id
+                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm"
                       : "text-gray-500 dark:text-gray-400 hover:text-gray-600"
                   )}
                 >
@@ -250,9 +250,9 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
               ))}
             </div>
           </div>
-          
+
           {!isViewerMode && (
-            <div 
+            <div
               onClick={handleShare}
               className="p-5 flex justify-between items-center group cursor-pointer"
             >
@@ -286,23 +286,23 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
               <p className="font-bold text-gray-800 dark:text-gray-200">{academies.length}{t('academy.count')}</p>
             </div>
           </div>
-          
+
           <div className="space-y-3 pt-2">
             {children.map(child => {
-              const childAcademies = academies.filter(a => 
+              const childAcademies = academies.filter(a =>
                 schedules.some(s => s.childId === child.id && s.academyId === a.id)
               );
               const childTotal = childAcademies.reduce((acc, curr) => acc + curr.price, 0);
               if (childTotal === 0) return null;
-              
+
               return (
                 <div key={child.id} className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">{child.name}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{child.name}</span>
                     <span className="text-gray-800 dark:text-gray-200">{childTotal.toLocaleString()}{t('academy.price')}</span>
                   </div>
                   <div className="w-full h-2 bg-gray-50 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={cn("h-full transition-all duration-500", COLOR_MAP[child.color as keyof typeof COLOR_MAP].split(' ')[0])}
                       style={{ width: `${(childTotal / academies.reduce((acc, curr) => acc + curr.price, 0)) * 100}%` }}
                     />
@@ -320,26 +320,26 @@ export default function SettingsView({ onEditChild, onAddChild }: SettingsViewPr
           <div className="flex flex-col gap-3">
             {!isViewerMode && (
               <>
-                <button 
+                <button
                   onClick={handleExport}
                   className="w-full py-4 text-xs font-bold bg-gray-50 dark:bg-gray-800 rounded-2xl text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Download size={14} /> {t('settings.backup')}
                 </button>
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full py-4 text-xs font-bold bg-gray-50 dark:bg-gray-800 rounded-2xl text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Upload size={14} /> {t('settings.restore')}
                 </button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept=".json" 
-                  onChange={handleImport} 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".json"
+                  onChange={handleImport}
                 />
-                <button 
+                <button
                   onClick={handleReset}
                   className="w-full py-4 text-xs font-bold bg-rose-50 dark:bg-rose-950/20 rounded-2xl text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all active:scale-95"
                 >

@@ -1,4 +1,5 @@
 import { Schedule } from '@/lib/db';
+import { formatDateStr } from '@/lib/utils';
 
 interface RepeatConfig {
     repeatType: 'none' | 'weekly' | 'monthly';
@@ -49,7 +50,7 @@ export function generateRepeatingSchedules(
         if (hasSpecificDays && activeDays) {
             const currentDayOfWeek = currentDate.getDay();
             if (activeDays.includes(currentDayOfWeek)) {
-                const dateStr = currentDate.toISOString().split('T')[0];
+                const dateStr = formatDateStr(currentDate);
                 schedules.push({
                     ...baseSchedule,
                     date: dateStr,
@@ -61,7 +62,7 @@ export function generateRepeatingSchedules(
             currentDate.setDate(currentDate.getDate() + 1); // Advance day by day
             loopCounter++;
         } else {
-            const dateStr = currentDate.toISOString().split('T')[0];
+            const dateStr = formatDateStr(currentDate);
 
             schedules.push({
                 ...baseSchedule,

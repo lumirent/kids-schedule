@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette, Repeat, Layers, Clock } from 'lucide-react';
 import { useScheduleStore, type Schedule, type Academy, type Child } from '@/hooks/useScheduleStore';
 import { COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
-import { cn, formatPhone } from '@/lib/utils';
+import { cn, formatPhone, formatDateStr } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import ChildModal from '@/components/modals/ChildModal';
@@ -53,7 +53,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
   }>({
     childId: '',
     academyId: '',
-    date: new Date().toISOString().split('T')[0],
+    date: formatDateStr(new Date()),
     start: '13:00',
     end: '14:00',
     shuttleIn: '',
@@ -108,7 +108,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
       });
     } else {
       setScheduleForm({
-        childId: '', academyId: '', date: new Date().toISOString().split('T')[0],
+        childId: '', academyId: '', date: formatDateStr(new Date()),
         start: '13:00', end: '14:00', shuttleIn: '', shuttleOut: '',
         groupId: null, repeatType: 'none', endCondition: 'date', endDate: '', count: 10, repeatDays: [new Date().getDay()]
       });
