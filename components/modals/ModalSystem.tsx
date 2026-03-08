@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette, Repeat, Layers } from 'lucide-react';
+import { X, Bus, UserCircle, PlusCircle, MinusCircle, Phone, Calendar, CreditCard, Palette, Repeat, Layers, Clock } from 'lucide-react';
 import { useScheduleStore, type Schedule, type Academy, type Child } from '@/hooks/useScheduleStore';
 import { COLOR_OPTIONS, COLOR_HEX } from '@/lib/constants';
 import { cn, formatPhone } from '@/lib/utils';
@@ -337,6 +337,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.dateLabel') || '시작 날짜'}</label>
               <Input
                 type="date"
+                icon={<Calendar size={18} />}
                 value={scheduleForm.date}
                 onChange={(e) => {
                   const newDate = e.target.value;
@@ -355,11 +356,11 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.startLabel')}</p>
-                  <Input type="time" value={scheduleForm.start} onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })} />
+                  <Input type="time" icon={<Clock size={16} />} value={scheduleForm.start} onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.endLabel')}</p>
-                  <Input type="time" value={scheduleForm.end} onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })} />
+                  <Input type="time" icon={<Clock size={16} />} value={scheduleForm.end} onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })} />
                 </div>
               </div>
             </div>
@@ -423,6 +424,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
                     {scheduleForm.endCondition === 'date' ? (
                       <Input
                         type="date"
+                        icon={<Calendar size={16} />}
                         value={scheduleForm.endDate}
                         onChange={(e) => setScheduleForm({ ...scheduleForm, endDate: e.target.value })}
                         placeholder="종료 날짜를 선택하세요"
@@ -449,11 +451,11 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 font-black ml-1 uppercase">{t('modal.shuttleInLabel')}</p>
-                  <Input type="time" className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30" value={scheduleForm.shuttleIn} onChange={(e) => setScheduleForm({ ...scheduleForm, shuttleIn: e.target.value })} />
+                  <Input type="time" icon={<Bus size={16} className="text-amber-500" />} className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30" value={scheduleForm.shuttleIn} onChange={(e) => setScheduleForm({ ...scheduleForm, shuttleIn: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black ml-1 uppercase">{t('modal.shuttleOutLabel')}</p>
-                  <Input type="time" className="bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30" value={scheduleForm.shuttleOut} onChange={(e) => setScheduleForm({ ...scheduleForm, shuttleOut: e.target.value })} />
+                  <Input type="time" icon={<Bus size={16} className="text-emerald-500" />} className="bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30" value={scheduleForm.shuttleOut} onChange={(e) => setScheduleForm({ ...scheduleForm, shuttleOut: e.target.value })} />
                 </div>
               </div>
             </div>

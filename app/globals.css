@@ -61,6 +61,32 @@
     @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Reset relative native inputs */
+  input[type="date"],
+  input[type="time"] {
+    position: relative;
+    /* 추가적으로 브라우저 기본 포맷 무효화(아이폰 등) 속성 적용 */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* 삭제 버튼(X 십자 아이콘) 등 숨김 속성 방어 로직 */
+  input[type="date"]::-webkit-clear-button,
+  input[type="time"]::-webkit-clear-button {
+    display: none;
+  }
 }
 
 /* Custom Utilities */
