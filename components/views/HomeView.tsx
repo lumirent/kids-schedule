@@ -205,7 +205,8 @@ export default function HomeView({ setView, onAddChild }: HomeViewProps) {
             const child = children.find(c => c.id === s.childId);
             if (!child) return null;
 
-            const colorClass = getScheduleColor(child.color, academy?.color || 'indigo', children.length);
+            const isFiltered = selectedChildId !== 'all';
+            const colorClass = getScheduleColor(child.color, academy?.color || 'indigo', isFiltered);
             const displayTime = s.shuttleIn || s.start;
 
             return (
@@ -219,7 +220,16 @@ export default function HomeView({ setView, onAddChild }: HomeViewProps) {
                   "flex-1 p-5 rounded-[2rem] border shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden",
                   colorClass
                 )}>
-                  <div className="relative z-10">
+                  {/* Child color indicator for multiple children */}
+                  {children.length > 1 && (
+                    <div 
+                      className={cn(
+                        "absolute top-0 left-0 bottom-0 w-1.5",
+                        SELECTED_COLOR_MAP[child.color as keyof typeof SELECTED_COLOR_MAP].split(' ')[0]
+                      )} 
+                    />
+                  )}
+                  <div className={cn("relative z-10", children.length > 1 ? "pl-2" : "")}>
                     <span className={cn(
                       "text-[10px] font-black px-2.5 py-1 rounded-full mb-2 inline-block bg-white/60 dark:bg-black/20 uppercase tracking-tight"
                     )}>

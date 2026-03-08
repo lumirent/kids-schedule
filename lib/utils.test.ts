@@ -26,19 +26,18 @@ describe('lib/utils', () => {
   });
 
   describe('getScheduleColor', () => {
-    it('returns child color if multiple children', () => {
-      const color = getScheduleColor('pink', 'blue', 2);
+    it('returns child color if NOT filtered', () => {
+      const color = getScheduleColor('pink', 'blue', false);
       expect(color).toBe(COLOR_MAP.pink);
     });
 
-    it('returns academy color if single child', () => {
-      const color = getScheduleColor('pink', 'blue', 1);
+    it('returns academy color if IS filtered', () => {
+      const color = getScheduleColor('pink', 'blue', true);
       expect(color).toBe(COLOR_MAP.blue);
     });
 
     it('falls back to indigo for invalid colors', () => {
-      // @ts-expect-error - testing invalid input
-      const color = getScheduleColor('nonexistent', 'invalid', 2);
+      const color = getScheduleColor('nonexistent', 'invalid', false);
       expect(color).toBe(COLOR_MAP.indigo);
     });
   });

@@ -19,6 +19,7 @@ export const translations = {
       in: '{days}일 후',
       today: '오늘',
       call: '전화',
+      downloadImage: '이미지 저장',
     },
     nav: {
       home: '홈',
@@ -186,6 +187,7 @@ export const translations = {
       in: 'In {days} days',
       today: 'Today',
       call: 'CALL',
+      downloadImage: 'Download Image',
     },
     nav: {
       home: 'Home',
@@ -353,6 +355,7 @@ export const translations = {
       in: '{days}日後',
       today: '今日',
       call: '電話',
+      downloadImage: '画像を保存',
     },
     nav: {
       home: 'ホーム',
@@ -520,6 +523,7 @@ export const translations = {
       in: '{days}天后',
       today: '今天',
       call: '电话',
+      downloadImage: '保存图片',
     },
     nav: {
       home: '首页',

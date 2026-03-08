@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Bus } from 'lucide-react';
+import React, { useMemo, useRef } from 'react';
+import { Bus, Download } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useScheduleStore, type Schedule } from '@/hooks/useScheduleStore';
 import { DAYS, TIME_SLOTS, SELECTED_COLOR_MAP } from '@/lib/constants';
 import { timeToMinutes, cn, getScheduleColor } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
+import { exportToPng } from '@/lib/export-utils';
 
 interface ScheduleViewProps {
   onEdit: (schedule: Schedule) => void;
@@ -13,6 +14,7 @@ interface ScheduleViewProps {
 export default function ScheduleView({ onEdit }: ScheduleViewProps) {
   const { schedules, academies, children, selectedChildId, setSelectedChildId, showSunday, updateSchedule, isViewerMode } = useScheduleStore();
   const { t } = useTranslation();
+  const scheduleRef = useRef<HTMLDivElement>(null);
   
   const activeDays = showSunday ? DAYS : DAYS.slice(1);
   const GRID_HEIGHT = 80; 
@@ -39,39 +41,57 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
     updateSchedule(scheduleId, { day: newDay });
   };
 
+  const downloadImage = async () => {
+    if (!scheduleRef.current) return;
+    const childName = selectedChildId === 'all' ? '전체' : children.find(c => c.id === selectedChildId)?.name || '';
+    const filename = `kids-schedule-${childName}-${new Date().toISOString().split('T')[0]}.png`;
+    
+    await exportToPng(scheduleRef.current, filename);
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
-      <div className="px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar glass border-b sticky top-0 z-40">
-        <button 
-          onClick={() => setSelectedChildId('all')} 
-          className={cn(
-            "px-5 py-2.5 rounded-2xl text-[10px] font-black tracking-widest uppercase transition-all min-h-[44px]",
-            selectedChildId === 'all' 
-              ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-              : 'bg-muted/50 text-gray-500 dark:text-gray-400 hover:text-gray-600'
-          )}
-        >
-          {t('common.all')}
-        </button>
-        {children.map(c => (
+      <div className="px-6 py-4 flex items-center justify-between glass border-b sticky top-0 z-40">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-[calc(100%-48px)]">
           <button 
-            key={c.id} 
-            onClick={() => setSelectedChildId(c.id)} 
+            onClick={() => setSelectedChildId('all')} 
             className={cn(
               "px-5 py-2.5 rounded-2xl text-[10px] font-black tracking-widest uppercase transition-all min-h-[44px]",
-              selectedChildId === c.id 
-                ? `${SELECTED_COLOR_MAP[c.color as keyof typeof SELECTED_COLOR_MAP]} shadow-lg` 
+              selectedChildId === 'all' 
+                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                 : 'bg-muted/50 text-gray-500 dark:text-gray-400 hover:text-gray-600'
             )}
           >
-            {c.name}
+            {t('common.all')}
           </button>
-        ))}
+          {children.map(c => (
+            <button 
+              key={c.id} 
+              onClick={() => setSelectedChildId(c.id)} 
+              className={cn(
+                "px-5 py-2.5 rounded-2xl text-[10px] font-black tracking-widest uppercase transition-all min-h-[44px]",
+                selectedChildId === c.id 
+                  ? `${SELECTED_COLOR_MAP[c.color as keyof typeof SELECTED_COLOR_MAP]} shadow-lg` 
+                  : 'bg-muted/50 text-gray-500 dark:text-gray-400 hover:text-gray-600'
+              )}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+        
+        <button 
+          onClick={downloadImage}
+          className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-all active:scale-95 ml-2 shrink-0"
+          title={t('common.downloadImage') || '이미지 저장'}
+        >
+          <Download size={20} />
+        </button>
       </div>
       
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex-1 overflow-auto no-scrollbar">
-          <div className="inline-flex min-w-full relative">
+          <div ref={scheduleRef} className="inline-flex min-w-full relative bg-background">
             {/* Time Column */}
             <div className="w-14 shrink-0 sticky left-0 glass z-30 border-r pt-14">
               {TIME_SLOTS.map(t_slot => (
@@ -108,7 +128,8 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
                       const iMin = timeToMinutes(s.shuttleIn || null); 
                       const oMin = timeToMinutes(s.shuttleOut || null);
                       
-                      const colorClass = getScheduleColor(child.color, academy?.color || 'indigo', children.length);
+                      const isFiltered = selectedChildId !== 'all';
+                      const colorClass = getScheduleColor(child.color, academy?.color || 'indigo', isFiltered);
 
                       return (
                         <Draggable key={s.id} draggableId={s.id} index={index} isDragDisabled={isViewerMode}>
@@ -133,7 +154,16 @@ export default function ScheduleView({ onEdit }: ScheduleViewProps) {
                               )}
                               onClick={() => onEdit(s)}
                             >
-                              <div className="flex-1 min-h-0">
+                              {/* Child color indicator for multiple children */}
+                              {children.length > 1 && (
+                                <div 
+                                  className={cn(
+                                    "absolute top-0 left-0 bottom-0 w-1",
+                                    SELECTED_COLOR_MAP[child.color as keyof typeof SELECTED_COLOR_MAP].split(' ')[0]
+                                  )} 
+                                />
+                              )}
+                              <div className={cn("flex-1 min-h-0", children.length > 1 ? "pl-1.5" : "")}>
                                 <div className="font-black text-[9px] truncate leading-none tracking-tight mb-1">{academy?.name}</div>
                                 
                                 <div className="flex flex-col gap-0.5">

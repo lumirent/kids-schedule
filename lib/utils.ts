@@ -13,16 +13,16 @@ export const timeToMinutes = (time: string | null) => {
 };
 
 /**
- * Intelligent Color Priority:
- * - If multiple children: Use child's color
- * - If single child: Use academy's color
+ * Schedule Color Logic:
+ * - In "All" view (multiple children): Use child's color for quick identification
+ * - In "Filtered" view (single child): Use academy's color for variety
  */
 export function getScheduleColor(
   childColor: string, 
-  academyColor: string, 
-  childrenCount: number
+  academyColor: string,
+  isFiltered: boolean
 ) {
-  const colorKey = childrenCount > 1 ? childColor : academyColor;
+  const colorKey = isFiltered ? academyColor : childColor;
   return COLOR_MAP[colorKey as keyof typeof COLOR_MAP] || COLOR_MAP.indigo;
 }
 
