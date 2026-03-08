@@ -2,7 +2,6 @@
 
 Kids Schedule is a local-first, privacy-focused scheduling application designed for parents to manage complex academy and shuttle schedules for multiple children. It prioritizes offline usability, ease of sharing via encoded URLs, and a mobile-first user experience.
 
-![Kids Schedule](public/icon512_maskable.png)
 
 ## Features
 
