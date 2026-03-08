@@ -41,6 +41,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">
             {label}
+            {props.required && <span className="text-rose-500 ml-0.5">*</span>}
           </label>
         )}
         <select

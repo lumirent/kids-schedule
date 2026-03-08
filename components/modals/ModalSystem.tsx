@@ -317,6 +317,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
             <div className="grid grid-cols-2 gap-3">
               <Select
                 label={t('modal.childLabel')}
+                required
                 value={scheduleForm.childId}
                 onChange={(e) => setScheduleForm({ ...scheduleForm, childId: e.target.value })}
               >
@@ -325,6 +326,7 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
               </Select>
               <Select
                 label={t('modal.academyLabel')}
+                required
                 value={scheduleForm.academyId}
                 onChange={(e) => setScheduleForm({ ...scheduleForm, academyId: e.target.value })}
               >
@@ -334,9 +336,10 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.dateLabel') || '시작 날짜'}</label>
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.dateLabel') || '시작 날짜'} <span className="text-rose-500 ml-0.5">*</span></label>
               <Input
                 type="date"
+                required
                 icon={<Calendar size={18} />}
                 value={scheduleForm.date}
                 onChange={(e) => {
@@ -352,15 +355,15 @@ export default function ModalSystem({ type, onClose, editingData }: ModalSystemP
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.timeLabel')}</label>
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('modal.timeLabel')} <span className="text-rose-500 ml-0.5">*</span></label>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.startLabel')}</p>
-                  <Input type="time" icon={<Clock size={16} />} value={scheduleForm.start} onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })} />
+                  <Input type="time" required icon={<Clock size={16} />} value={scheduleForm.start} onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-black ml-1 uppercase">{t('modal.endLabel')}</p>
-                  <Input type="time" icon={<Clock size={16} />} value={scheduleForm.end} onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })} />
+                  <Input type="time" required icon={<Clock size={16} />} value={scheduleForm.end} onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })} />
                 </div>
               </div>
             </div>
